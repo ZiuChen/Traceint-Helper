@@ -20,4 +20,10 @@ mv .sample.env .env
 node index.js
 ```
 
-**ReserveTask请填入最小化后的JSON数据**
+## 注意事项
+
+在填写 `.env` 时:
+
+- **`libId` 为不同自习室id 可从执行脚本时控制台输出获取**
+- **`ReserveTask` 请填入最小化后的JSON数据**
+- **`Timeout` 单位为毫秒(ms)**

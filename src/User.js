@@ -23,35 +23,37 @@ const User = class {
     await this.fetchUserInfo()
     await this.fetchLibList()
     const msg = `用户名: ${this.userNick}\n共有${this.libList.length}个场馆:\n${this.libList
-      .map((lib) => lib.lib_name + ': ' + lib.lib_id)
+      .map((lib) => lib.lib_name + ' libId: ' + lib.lib_id)
       .join('\n')}`
     console.log(msg)
   }
 
   async start() {
-    const msg = `已设置预约任务: ${this.reserveTask.length}个\n${
+    const msg = `已设置预约任务: ${this.reserveTask.length}个${
       this.reserveTask.length > 0
-        ? this.reserveTask.map((task) => task.libId + ' ' + task.seatId).join('\n')
+        ? '\n' + this.reserveTask.map((task) => task.libId + ' ' + task.seatId).join('\n')
         : ''
     }`
     console.log(msg)
     if (this.reserveTask.length > 0) {
       // 配置了任务 按任务预定
+      console.log('按预约任务检索')
       setInterval(async () => {
         for (const task of this.reserveTask) {
           await this.fetchSeatList(task.libId) // 获取最新的座位信息
           await this.reserve(task.libId, task.seatId)
         }
-      }, 2e3)
+      }, parent(env.Timeout))
     } else {
       // 未配置任务 捡漏模式 有座即可
+      console.log('检索所有图书馆')
       setInterval(async () => {
         for (const lib of this.libList) {
           await this.fetchSeatList(lib.lib_id)
           // 获取当前图书馆所有空位
           const seats = lib.seats.filter((seat) => seat.seat_status === 1)
           if (seats.length > 0) {
-            console.log('有空位: ' + lib.lib_name + seats.map((seat) => seat.name).join(','))
+            console.log(lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(','))
             for (const seat of seats) {
               await this.reserve(lib.lib_id, seat.name)
             }
@@ -59,7 +61,7 @@ const User = class {
             console.log(lib.lib_name + '无空位')
           }
         }
-      }, 2e3)
+      }, parseInt(env.Timeout))
     }
   }
 
@@ -87,7 +89,6 @@ const User = class {
   async fetchLibList() {
     const data = await request('index')
     this.libList = data.data.userAuth.prereserve.libs
-    console.log(this.libList)
     return this.libList
   }
 
