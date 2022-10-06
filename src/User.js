@@ -30,6 +30,7 @@ const User = class {
   }
 
   async startReserve(isMapAll = false) {
+    console.log('开始今日预约')
     const msg = `已设置预约任务: ${this.reserveTask.length}个${
       this.reserveTask.length > 0
         ? '\n' + this.reserveTask.map((task) => task.libId + ' ' + task.seatId).join('\n')
@@ -77,6 +78,7 @@ const User = class {
   }
 
   async startPrereserve(isMapAll = false) {
+    console.log('开始明日预约')
     if (this.reserveTask.length > 0 && !isMapAll) {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
