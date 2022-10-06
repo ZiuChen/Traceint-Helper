@@ -23,6 +23,8 @@ const User = class {
   async init() {
     await this.fetchUserInfo()
     await this.fetchLibList()
+    await this.fetchSeatList()
+    await this.fetchPrereserveSeatList()
     const msg = `用户名: ${this.userNick}\n共有${this.libList.length}个场馆:\n${this.libList
       .map((lib) => lib.lib_name + ' libId: ' + lib.lib_id)
       .join('\n')}`
@@ -41,11 +43,19 @@ const User = class {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
       const loop = async () => {
+        await this.fetchSeatList()
         for (const task of this.reserveTask) {
-          await this.fetchSeatList(task.libId) // 获取最新的座位信息
-          await this.reserve(task.libId, task.seatId)
-          await sleep(parseInt(env.Timeout))
+          const seat = this.libList
+            .filter((lib) => lib.lib_id === task.libId)[0]
+            .seats.filter((seat) => seat.seat_id === task.seatId)[0]
+          if (seat.seat_status === 1) {
+            await this.reserve(task.libId, task.seatId)
+            await sleep(parseInt(env.Timeout))
+          } else {
+            console.log(`任务: ${task.libId} ${task.seatId} 预约失败 已被预约`)
+          }
         }
+        await sleep(parseInt(env.Timeout))
         loop()
       }
       loop()
@@ -53,12 +63,12 @@ const User = class {
       // 未配置任务 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
+        await this.fetchSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
             console.log(lib.lib_name + '已忽略')
             continue
           }
-          await this.fetchSeatList(lib.lib_id)
           // 获取当前图书馆所有空位
           const seats = lib.seats.filter((seat) => seat.seat_status === 1)
           if (!seats.length) {
@@ -71,6 +81,7 @@ const User = class {
             await sleep(parseInt(env.Timeout))
           }
         }
+        await sleep(parseInt(env.Timeout))
         loop()
       }
       loop()
@@ -83,10 +94,19 @@ const User = class {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
       const loop = async () => {
+        await this.fetchPrereserveSeatList()
         for (const task of this.reserveTask) {
-          await this.prereserve(task.libId, task.seatId)
-          await sleep(parseInt(env.Timeout))
+          const seats = this.libList.filter((lib) => lib.lib_id === task.libId)[0].pre_seats
+          const seat = seats.filter((seat) => parseInt(seat.name) == task.seatId)[0]
+          if (seat.status === false) {
+            // false: 无人
+            // seat_status都为 null 不知原因
+            await this.prereserve(task.libId, task.seatId)
+            await sleep(parseInt(env.Timeout))
+          }
         }
+        console.log('无空位')
+        await sleep(parseInt(env.Timeout))
         loop()
       }
       loop()
@@ -94,12 +114,12 @@ const User = class {
       // 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
+        await this.fetchPrereserveSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
             console.log(lib.lib_name + '已忽略')
             continue
           }
-          await this.fetchPrereserveSeatList(lib.lib_id)
           // 获取当前图书馆所有空位
           const seats = lib.seats.filter((seat) => seat.seat_status === 1)
           if (!seats.length) {
@@ -112,6 +132,7 @@ const User = class {
             await sleep(parseInt(env.Timeout))
           }
         }
+        await sleep(parseInt(env.Timeout))
         loop()
       }
       loop()
@@ -145,20 +166,21 @@ const User = class {
     return this.libList
   }
 
-  async fetchSeatList(libId) {
-    const data = await request('libLayout', {
-      libId: libId
-    })
-    // status: 1 可选 2 已选 3 有人 4 暂离
-    const seatsArray = data.data.userAuth.reserve.libs[0].lib_layout.seats
-
-    this.libList.filter((lib) => lib.lib_id === libId)[0].seats = seatsArray
-    return seatsArray
+  async fetchSeatList() {
+    // 更新今日预约所有场馆的座位信息
+    for (const lib of this.libList) {
+      const data = await request('libLayout', {
+        libId: lib.lib_id
+      })
+      // status: 1 可选 2 已选 3 有人 4 暂离
+      const seatsArray = data.data.userAuth.reserve.libs[0].lib_layout.seats
+      this.libList.filter((l) => l.lib_id === lib.lib_id)[0].seats = seatsArray
+    }
   }
 
   async reserve(libId, seatId) {
     const seats = this.libList.filter((lib) => lib.lib_id === libId)[0].seats
-    const seatKey = seats.filter((seat) => seat.name === seatId.toString())[0].key
+    const seatKey = seats.filter((seat) => parseInt(seat.name) === seatId)[0].key
     if (!seatKey) {
       console.log('未找到座位: ' + seatId)
       return
@@ -177,37 +199,34 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
-      return
     } else {
       console.log(
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
       )
-      return
     }
   }
 
-  async fetchPrereserveLibList() {
-    const data = await request('pre_index')
-    return data.data.userAuth.prereserve.libs
-  }
-
-  async fetchPrereserveSeatList(libId) {
-    const data = await request('pre_libLayout', {
-      libId: libId
-    })
-    const seats = data.data.userAuth.prereserve.libLayout?.seats
-    if (!seats) {
-      console.log('获取场馆座位信息出错: ' + libId + ' ' + data.errors[0].msg)
-      return
-    } else {
-      return seats
+  async fetchPrereserveSeatList() {
+    // 更新明日预约所有场馆的座位信息
+    for (const lib of this.libList) {
+      const data = await request('pre_libLayout', {
+        libId: lib.lib_id
+      })
+      const seatsArray = data.data.userAuth.prereserve.libLayout?.seats
+      if (!seatsArray) {
+        console.log('获取场馆座位信息出错: ' + lib.lib_id + ' ' + data.errors[0].msg)
+        return
+      } else {
+        this.libList.filter((l) => l.lib_id === lib.lib_id)[0].pre_seats = seatsArray
+      }
     }
   }
 
   async prereserve(libId, seatId) {
-    const seats = await this.fetchPrereserveSeatList(libId)
     // seat.name: 045 / 046 but not 45 / 46
-    const seatKey = seats.filter((seat) => parseInt(seat.name) == seatId)[0]?.key
+    const seatKey = this.libList
+      .filter((lib) => lib.lib_id === libId)[0]
+      .pre_seats.filter((seat) => parseInt(seat.name) === seatId)[0].key
     if (!seatKey) {
       console.log('未找到座位: ' + seatId)
       return
@@ -226,12 +245,10 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
-      return
     } else {
       console.log(
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
       )
-      return
     }
   }
 }
