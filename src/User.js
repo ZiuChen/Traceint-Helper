@@ -29,6 +29,7 @@ const User = class {
       .map((lib) => lib.lib_name + ' libId: ' + lib.lib_id)
       .join('\n')}`
     console.log(msg)
+    await this.checkIn()
   }
 
   async startReserve(isMapAll = false) {
@@ -137,6 +138,21 @@ const User = class {
       }
       loop()
     }
+  }
+
+  async checkIn() {
+    const data = await request('getList')
+    const taskId = data.data.userAuth.credit.tasks[0].id
+    await request('checkIn', {
+      user_task_id: taskId
+    }).then(async (res) => {
+      const done = res.data.userAuth.credit.done
+      console.log(done ? '签到成功' : '签到失败: 今日已签到')
+      if (done) {
+        const queryRes = await request('user_credit')
+        console.log('当前积分: ' + queryRes.data.userAuth.currentUser.user_credit)
+      }
+    })
   }
 
   async fetchUserInfo() {

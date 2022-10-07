@@ -14,5 +14,10 @@ module.exports = {
   pre_reserveSeat:
     'mutation save($key: String!, $libid: Int!, $captchaCode: String, $captcha: String) {\n userAuth {\n prereserve {\n save(key: $key, libId: $libid, captcha: $captcha, captchaCode: $captchaCode)\n }\n }\n}',
   prereserveCheckMsg:
-    'query prereserveCheckMsg {\n userAuth {\n prereserve {\n prereserveCheckMsg\n }\n }\n}'
+    'query prereserveCheckMsg {\n userAuth {\n prereserve {\n prereserveCheckMsg\n }\n }\n}',
+  getList:
+    'query getList {\n userAuth {\n credit {\n tasks {\n id\n task_id\n task_name\n task_info\n task_url\n credit_num\n contents\n conditions\n task_type\n status\n }\n staticTasks {\n id\n name\n task_type_name\n credit_num\n contents\n button\n }\n }\n }\n}',
+  checkIn:
+    'mutation done($user_task_id: Int!) {\n userAuth {\n credit {\n done(user_task_id: $user_task_id)\n }\n }\n}',
+  user_credit: 'query user_credit {\n userAuth {\n currentUser {\n user_credit\n }\n }\n}'
 }
