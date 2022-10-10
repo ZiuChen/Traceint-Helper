@@ -29,7 +29,11 @@ const User = class {
       .map((lib) => lib.lib_name + ' libId: ' + lib.lib_id)
       .join('\n')}`
     console.log(msg)
-    await this.checkIn()
+    try {
+      await this.checkIn()
+    } catch (error) {
+      console.log('签到失败: ' + error)
+    }
   }
 
   async startReserve(isMapAll = false) {
