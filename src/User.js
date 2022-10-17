@@ -200,7 +200,7 @@ const User = class {
 
   async reserve(libId, seatId) {
     const seats = this.libList.filter((lib) => lib.lib_id === libId)[0].seats
-    const seatKey = seats.filter((seat) => parseInt(seat.name) === seatId)[0].key
+    const seatKey = seats.filter((seat) => parseInt(seat.name) == seatId)[0].key
     if (!seatKey) {
       console.log('未找到座位: ' + seatId)
       return
@@ -246,7 +246,7 @@ const User = class {
     // seat.name: 045 / 046 but not 45 / 46
     const seatKey = this.libList
       .filter((lib) => lib.lib_id === libId)[0]
-      .pre_seats.filter((seat) => parseInt(seat.name) === seatId)[0].key
+      .pre_seats.filter((seat) => parseInt(seat.name) == seatId)[0].key
     if (!seatKey) {
       console.log('未找到座位: ' + seatId)
       return
