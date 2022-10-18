@@ -42,7 +42,7 @@ const User = class {
 
   async startQueue() {
     // spawn queue.py and pass cookieStr by argv
-    const py = spawn('python', ['queue.py', cookieStr])
+    const py = spawn('python', ['./src/queue.py', cookieStr])
     return new Promise((resolve, reject) => {
       py.stdout.on('data', (data) => {
         if (data.toString().includes('SUCCESS')) {
@@ -246,9 +246,10 @@ const User = class {
           data.errors[0].msg
       )
     } else {
-      console.log(
+      const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
-      )
+      console.log(msg)
+      notifier.notify(msg)
     }
   }
 
@@ -292,9 +293,10 @@ const User = class {
           data.errors[0].msg
       )
     } else {
-      console.log(
+      const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
-      )
+      console.log(msg)
+      notifier.notify(msg)
     }
   }
 }
