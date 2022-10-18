@@ -151,7 +151,7 @@ const User = class {
             continue
           }
           // 获取当前图书馆所有空位
-          const seats = lib.seats.filter((seat) => seat.seat_status === 1)
+          const seats = lib.pre_seats.filter((seat) => seat.status === false && !!seat.name)
           if (!seats.length) {
             console.log(lib.lib_name + '无空位')
             continue
