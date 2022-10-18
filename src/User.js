@@ -1,6 +1,18 @@
+const { spawn } = require('child_process')
+const notifier = require('node-notifier')
+
 const request = require('./request')
 const env = require('./env')
 const { sleep } = require('./utils')
+const cookieStr = require('./cookies')
+
+// rewite console.log and add time prefix
+const log = console.log
+console.log = (...args) => {
+  const date = new Date()
+  const time = `${date.toLocaleString()}`
+  log(`[${time}]`, ...args)
+}
 
 const User = class {
   userInfo
@@ -10,14 +22,6 @@ const User = class {
 
   constructor() {
     this.reserveTask = env.ReserveTask
-  }
-
-  get header() {
-    return {
-      Accept: '*/*',
-      'User-Agent': 'MicroMessenger/8.0.2',
-      Cookie: 'wechatSESS_ID=' + this.sessid + ';' + 'Authorization=' + this.Authorization
-    }
   }
 
   async init() {
@@ -36,13 +40,32 @@ const User = class {
     }
   }
 
+  async startQueue() {
+    // spawn queue.py and pass cookieStr by argv
+    const py = spawn('python', ['queue.py', cookieStr])
+    return new Promise((resolve, reject) => {
+      py.stdout.on('data', (data) => {
+        if (data.toString().includes('SUCCESS')) {
+          console.log('排队成功')
+          resolve(true)
+        } else if (data.toString().includes('PENDING')) {
+          console.log('等待排队')
+        }
+      })
+      py.stderr.on('data', (data) => {
+        console.log('排队出错: ' + data.toString())
+        reject(data)
+      })
+      py.on('close', (code) => {
+        console.log(`进程关闭: ${code}`)
+        resolve(false)
+      })
+    })
+  }
+
   async startReserve(isMapAll = false) {
     console.log('开始今日预约')
-    const msg = `已设置预约任务: ${this.reserveTask.length}个${
-      this.reserveTask.length > 0
-        ? '\n' + this.reserveTask.map((task) => task.libId + ' ' + task.seatId).join('\n')
-        : ''
-    }`
+    const msg = `已设置预约任务: ${this.reserveTask.length}个`
     console.log(msg)
     if (this.reserveTask.length > 0 && !isMapAll) {
       // 配置了任务 按任务预定
@@ -80,7 +103,8 @@ const User = class {
             console.log(lib.lib_name + '无空位')
             continue
           }
-          console.log(lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(','))
+          const msg = lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(',')
+          notifier.notify(msg)
           for (const seat of seats) {
             await this.reserve(lib.lib_id, seat.name)
             await sleep(parseInt(env.Timeout))
@@ -132,6 +156,7 @@ const User = class {
             continue
           }
           console.log(lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(','))
+
           for (const seat of seats) {
             await this.prereserve(lib.lib_id, seat.name)
             await sleep(parseInt(env.Timeout))
