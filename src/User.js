@@ -50,17 +50,18 @@ const User = class {
           resolve(true)
         } else if (data.toString().includes('PENDING')) {
           console.log('等待排队')
+        } else if (data.toString().includes('ERROR')) {
+          console.log('排队失败')
+          reject(false)
         }
       })
       py.stderr.on('data', (data) => {
         console.log('排队出错: ' + data.toString())
-        reject(data)
       })
       py.on('close', (code) => {
-        console.log(`进程关闭: ${code}`)
-        resolve(false)
+        console.log(`排队进程关闭: ${code}`)
       })
-    })
+    }).catch((err) => console.log('排队进程Reject: ' + err))
   }
 
   async startReserve(isMapAll = false) {
