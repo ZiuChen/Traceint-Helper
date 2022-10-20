@@ -71,6 +71,7 @@ const User = class {
     if (this.reserveTask.length > 0 && !isMapAll) {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
+      let count = 0
       const loop = async () => {
         await this.fetchSeatList()
         for (const task of this.reserveTask) {
@@ -80,10 +81,9 @@ const User = class {
           if (seat.seat_status === 1) {
             await this.reserve(task.libId, task.seatId)
             await sleep(parseInt(env.Timeout))
-          } else {
-            console.log(`任务: ${task.libId} ${task.seatId} 预约失败 已被预约`)
           }
         }
+        console.log(`检索第${++count}次`)
         await sleep(parseInt(env.Timeout))
         loop()
       }
