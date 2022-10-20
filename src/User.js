@@ -75,8 +75,8 @@ const User = class {
         await this.fetchSeatList()
         for (const task of this.reserveTask) {
           const seat = this.libList
-            .filter((lib) => lib.lib_id === task.libId)[0]
-            .seats.filter((seat) => seat.seat_id === task.seatId)[0]
+            .filter((lib) => lib.lib_id == task.libId)[0]
+            .seats.filter((seat) => seat.name == task.seatId)[0]
           if (seat.seat_status === 1) {
             await this.reserve(task.libId, task.seatId)
             await sleep(parseInt(env.Timeout))
