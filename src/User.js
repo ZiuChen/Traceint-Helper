@@ -1,4 +1,5 @@
 const { spawn } = require('child_process')
+const path = require('path')
 const notifier = require('node-notifier')
 
 const request = require('./request')
@@ -124,7 +125,11 @@ const User = class {
             continue
           }
           const msg = lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(',')
-          notifier.notify(msg)
+          notifier.notify({
+            icon: path.join(__dirname, 'icon.jpg'),
+            title: 'Traceint-Helper',
+            message: msg
+          })
           for (const seat of seats) {
             await this.reserve(lib.lib_id, seat.name)
             await sleep(parseInt(env.Timeout))
@@ -268,7 +273,11 @@ const User = class {
       const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
       console.log(msg)
-      notifier.notify(msg)
+      notifier.notify({
+        icon: path.join(__dirname, 'icon.jpg'),
+        title: 'Traceint-Helper',
+        message: msg
+      })
     }
   }
 
@@ -315,7 +324,11 @@ const User = class {
       const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
       console.log(msg)
-      notifier.notify(msg)
+      notifier.notify({
+        icon: path.join(__dirname, 'icon.jpg'),
+        title: 'Traceint-Helper',
+        message: msg
+      })
     }
   }
 }
