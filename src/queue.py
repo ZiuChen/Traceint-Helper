@@ -14,7 +14,7 @@ except:
 
 # if cookie_string is empty, read cookie_string from file .env
 if cookie_string == '':
-    with open(".env", "r") as f:
+    with open("../.env", "r") as f:
         file_values = {}
         for line in f.readlines():
             line = line.strip()
@@ -43,18 +43,26 @@ if ws.connected:
         # 接收实时数据，并打印出来
         while True:
             ws.send('{"ns":"prereserve/queue","msg":""}')
-            a = ws.recv()
-            print(a)
+            try:
+                a = ws.recv()
+            except:
+                print("CANCEL") # 读取结果失败 则连接已关闭 排队结束
+                exit()
             if a.find('u6392') != -1: # 排队成功返回的第一个字符
                 print("SUCCESS")
                 break
             elif a.find('1000') != -1:
-                print("ERROR") # 排队出错 一般为cookie失效
+                print("ERROR") # 排队出错 code:1000 一般为cookie失效
                 break
             elif a.find('u4e0d') != -1:
                 print("PENDING") # 不在预约时间段内
                 time.sleep(0.5)
-            print(a) # TODO: 排队中的返回值
+            else:
+                print(a) # 在队列中 data字段代表前方人数
             sys.stdout.flush() # flush stdout ensure nodejs can get the output
         # 关闭连接
         ws.close()
+
+# if connection is closed, exit
+if not ws.connected:
+    exit()

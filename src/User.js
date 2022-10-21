@@ -53,13 +53,32 @@ const User = class {
         } else if (data.toString().includes('ERROR')) {
           console.log('排队失败')
           reject(false)
+        } else if (data.toString().includes('CANCEL')) {
+          // 连接被关闭 排队结束
+          console.log('排队结束')
+          resolve(true)
+        } else {
+          // 排队中 解析data值代表当前排队人数
+          try {
+            const res = JSON.parse(data.toString())
+            console.log(`当前排队人数: ${res.data}`)
+            if (res.data === 0) {
+              console.log('排队成功')
+              resolve(true)
+              py.kill() // 关闭进程
+            }
+          } catch (error) {
+            console.log('服务器返回信息解析出错')
+          }
         }
       })
       py.stderr.on('data', (data) => {
         console.log('排队出错: ' + data.toString())
+        reject(false)
       })
       py.on('close', (code) => {
         console.log(`排队进程关闭: ${code}`)
+        resolve(true)
       })
     }).catch((err) => console.log('排队进程Reject: ' + err))
   }
