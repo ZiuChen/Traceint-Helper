@@ -56,8 +56,7 @@ const User = class {
           reject(false)
         } else if (data.toString().includes('CANCEL')) {
           // 连接被关闭 排队结束
-          console.log('排队结束')
-          resolve(true)
+          console.log('排队连接关闭')
         } else {
           // 排队中 解析data值代表当前排队人数
           try {

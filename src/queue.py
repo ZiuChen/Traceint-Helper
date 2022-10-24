@@ -56,7 +56,7 @@ if ws.connected:
                 break
             elif a.find('u4e0d') != -1:
                 print("PENDING") # 不在预约时间段内
-                time.sleep(0.5)
+                time.sleep(0.1)
             else:
                 print(a) # 在队列中 data字段代表前方人数
             sys.stdout.flush() # flush stdout ensure nodejs can get the output
