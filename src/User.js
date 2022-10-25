@@ -57,6 +57,7 @@ const User = class {
         } else if (data.toString().includes('CANCEL')) {
           // 连接被关闭 排队结束
           console.log('排队连接关闭')
+          resolve(false)
         } else {
           // 排队中 解析data值代表当前排队人数
           try {
@@ -77,8 +78,10 @@ const User = class {
         reject(false)
       })
       py.on('close', (code) => {
-        console.log(`排队进程关闭: ${code}`)
-        resolve(true)
+        // 进程关闭 不代表排队成功
+        // 在别处排队时 连接会关闭
+        // 连接关闭 => 进程关闭, 此时排队并未成功 而进程关闭了 不能在此处resolve(true)
+        console.log(`排队进程已关闭: ${code}`)
       })
     }).catch((err) => console.log('排队进程Reject: ' + err))
   }
