@@ -101,6 +101,11 @@ const User = class {
             .filter((lib) => lib.lib_id == task.libId)[0]
             .seats.filter((seat) => seat.name == task.seatId)[0]
           if (seat.seat_status === 1) {
+            notifier.notify({
+              icon: path.join(__dirname, 'icon.jpg'),
+              title: 'Traceint-Helper',
+              message: `图书馆${task.libId} ${task.seatId}有空位`
+            })
             await this.reserve(task.libId, task.seatId)
             await sleep(parseInt(env.Timeout))
           }
@@ -257,13 +262,13 @@ const User = class {
       console.log('未找到座位: ' + seatId)
       return
     }
-    const data = await request('reserveSeat', {
+    const data = await request('reserueSeat', {
       seatKey: seatKey,
       libId: libId,
       captchaCode: '',
       captcha: ''
     })
-    if (!data.data.userAuth.reserve.reserveSeat) {
+    if (!data.data.userAuth.reserve.reserueSeat) {
       console.log(
         '预约失败: ' +
           this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name +
@@ -308,8 +313,8 @@ const User = class {
       console.log('未找到座位: ' + seatId)
       return
     }
-    const data = await request('pre_reserveSeat', {
-      key: seatKey,
+    const data = await request('save', {
+      key: seatKey + '.',
       libid: libId,
       captchaCode: '',
       captcha: ''
