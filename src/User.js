@@ -79,8 +79,8 @@ const User = class {
       })
       py.on('close', (code) => {
         // 进程关闭 不代表排队成功
-        // 在别处排队时 连接会关闭
-        // 连接关闭 => 进程关闭, 此时排队并未成功 而进程关闭了 不能在此处resolve(true)
+        // 在别处进入排队时 连接会关闭(?) 连接关闭 => 进程关闭
+        resolve(true)
         console.log(`排队进程已关闭: ${code}`)
       })
     }).catch((err) => console.log('排队进程Reject: ' + err))
