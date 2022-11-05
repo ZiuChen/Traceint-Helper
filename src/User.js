@@ -1,17 +1,16 @@
-const { spawn } = require('child_process')
 const path = require('path')
 const notifier = require('node-notifier')
 
 const request = require('./request')
 const env = require('./env')
 const { sleep } = require('./utils')
-const cookieStr = require('./cookies')
+const queue = require('./queue')
 
 // rewite console.log and add time prefix
 const log = console.log
 console.log = (...args) => {
   const date = new Date()
-  const time = `${date.toLocaleString()}`
+  const time = `${date.toLocaleString()}:${date.getMilliseconds()}`
   log(`[${time}]`, ...args)
 }
 
@@ -42,48 +41,7 @@ const User = class {
   }
 
   async startQueue() {
-    // spawn queue.py and pass cookieStr by argv
-    const py = spawn('python', ['./src/queue.py', cookieStr])
-    return new Promise((resolve, reject) => {
-      py.stdout.on('data', (data) => {
-        if (data.toString().includes('SUCCESS')) {
-          console.log('排队成功')
-          resolve(true)
-        } else if (data.toString().includes('PENDING')) {
-          console.log('等待排队')
-        } else if (data.toString().includes('ERROR')) {
-          console.log('排队失败')
-          reject(false)
-        } else if (data.toString().includes('CANCEL')) {
-          // 连接被关闭 排队结束
-          console.log('排队连接关闭')
-          resolve(false)
-        } else {
-          // 排队中 解析data值代表当前排队人数
-          try {
-            const res = JSON.parse(data.toString())
-            console.log(`当前排队人数: ${res.data}`)
-            if (res.data === 0) {
-              console.log('排队成功')
-              resolve(true)
-              py.kill() // 关闭进程
-            }
-          } catch (error) {
-            console.log('服务器返回信息解析出错')
-          }
-        }
-      })
-      py.stderr.on('data', (data) => {
-        console.log('排队出错: ' + data.toString())
-        reject(false)
-      })
-      py.on('close', (code) => {
-        // 进程关闭 不代表排队成功
-        // 在别处进入排队时 连接会关闭(?) 连接关闭 => 进程关闭
-        resolve(true)
-        console.log(`排队进程已关闭: ${code}`)
-      })
-    }).catch((err) => console.log('排队进程Reject: ' + err))
+    return queue()
   }
 
   async startReserve(isMapAll = false) {

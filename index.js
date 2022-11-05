@@ -1,17 +1,23 @@
 const User = require('./src/User')
+const { sleepUntil } = require('./src/utils')
+const env = require('./src/env')
 
-const main = async () => {
+const main_handler = async () => {
   const user = new User()
   await user.init()
+
   // today reverse
   await user.startReserve(true)
-  // tomorrow pre-reserve (manual queue)
-  // await user.startPrereserve()
+
   // tomorrow pre-reserve (auto queue)
-  // const q = await user.startQueue()
-  // if (q) {
-  //   await user.startPrereserve()
-  // }
+  const { hour, minute, second } = env.SleepUntil
+  await sleepUntil({ hour, minute, second })
+  const q = await user.startQueue()
+  if (q) {
+    await user.startPrereserve()
+  }
 }
 
-main()
+// main_handler()
+
+module.exports = main_handler

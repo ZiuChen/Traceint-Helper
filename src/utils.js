@@ -9,7 +9,10 @@ module.exports = {
     }
     console.log(`休眠至: ${time.hour}:${time.minute}:${time.second}`)
     return new Promise((resolve) =>
-      setTimeout(resolve, now.setHours(time.hour, time.minute, time.second) - Date.now())
+      setTimeout(() => {
+        console.log('休眠结束')
+        resolve()
+      }, now.setHours(time.hour, time.minute, time.second) - Date.now())
     )
   }
 }

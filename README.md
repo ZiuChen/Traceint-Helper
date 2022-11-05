@@ -8,7 +8,7 @@
 
 - 支持预设抢课任务 指定图书馆与座位号
 - 支持捡漏模式 有座自动预约并系统通知
-- 支持明日预约 支持自动排队 (需Python环境)
+- 支持明日预约 支持自动排队
 - Cookie等隐私内容以环境变量保存在本地
 - 即用即开 用完即关
 
@@ -18,7 +18,7 @@
 # 将代码克隆到本地
 git clone https://github.com/ZiuChen/Traceint-Helper.git
 # 安装依赖
-pnpm install
+npm install
 # 将.sample.env重命名为.env
 mv .sample.env .env
 # 自行抓包后 将Cookie等数据填入.env
@@ -36,6 +36,7 @@ node index.js
 - `Timeout` 单位为毫秒(ms)
   - 此参数决定了两次预定请求之间的时间间隔, 设置过小会触发服务器防护机制导致请求失败, 建议保持默认
 - `IgnoreLibIds` 填入的自习室id 将在捡漏模式下被忽略
+- `SleepUntil` 填入开始明日预约排队的时间
 
 在初始化入口函数`index.js`时:
 
