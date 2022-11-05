@@ -20,4 +20,4 @@ const main_handler = async () => {
 
 // main_handler()
 
-module.exports = main_handler
+exports.main_handler = main_handler
