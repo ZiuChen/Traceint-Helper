@@ -6,6 +6,8 @@ const env = require('./env')
 const { sleep } = require('./utils')
 const queue = require('./queue')
 
+const RETRY_TIMES = 3
+
 // rewite console.log and add time prefix
 const log = console.log
 console.log = (...args) => {
@@ -19,9 +21,15 @@ const User = class {
   userNick
   libList
   reserveTask
+  reserveStatus
+  prereserveStatus
+  failTimes
 
   constructor() {
     this.reserveTask = env.ReserveTask
+    this.reserveStatus = false
+    this.prereserveStatus = false
+    this.failTimes = 0
   }
 
   async init() {
@@ -53,6 +61,8 @@ const User = class {
       console.log('按预约任务检索')
       let count = 0
       const loop = async () => {
+        // 预约成功或者失败次数超过 RETRY_TIMES 次则停止
+        if (this.reserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchSeatList()
         for (const task of this.reserveTask) {
           const seat = this.libList
@@ -77,6 +87,7 @@ const User = class {
       // 未配置任务 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
+        if (this.reserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
@@ -87,6 +98,7 @@ const User = class {
           const seats = lib.seats.filter((seat) => seat.seat_status === 1)
           if (!seats.length) {
             console.log(lib.lib_name + '无空位')
+            this.failTimes++
             continue
           }
           const msg = lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(',')
@@ -105,6 +117,7 @@ const User = class {
       }
       loop()
     }
+    return
   }
 
   async startPrereserve(isMapAll = false) {
@@ -113,6 +126,7 @@ const User = class {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
       const loop = async () => {
+        if (this.prereserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchPrereserveSeatList()
         for (const task of this.reserveTask) {
           const seats = this.libList.filter((lib) => lib.lib_id === task.libId)[0].pre_seats
@@ -125,6 +139,7 @@ const User = class {
           }
         }
         console.log('无空位')
+        this.failTimes++
         await sleep(parseInt(env.Timeout))
         loop()
       }
@@ -133,6 +148,7 @@ const User = class {
       // 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
+        if (this.prereserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchPrereserveSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
@@ -157,6 +173,7 @@ const User = class {
       }
       loop()
     }
+    return
   }
 
   async checkIn() {
@@ -234,6 +251,8 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
+      this.failTimes++
+      return false
     } else {
       const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
@@ -243,6 +262,8 @@ const User = class {
         title: 'Traceint-Helper',
         message: msg
       })
+      this.reserveStatus = true
+      return true
     }
   }
 
@@ -285,6 +306,8 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
+      this.failTimes++
+      return false
     } else {
       const msg =
         '预约成功: ' + this.libList.filter((lib) => lib.lib_id == libId)[0].lib_name + seatId
@@ -294,6 +317,8 @@ const User = class {
         title: 'Traceint-Helper',
         message: msg
       })
+      this.prereserveStatus = true
+      return true
     }
   }
 }
