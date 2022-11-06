@@ -1,10 +1,8 @@
 const { WebSocket } = require('ws')
-const cookieStr = require('./cookies')
 const { sleep } = require('./utils')
 
 const options = {
   headers: {
-    Cookie: cookieStr,
     'Cache-Control': 'no-cache',
     'User-Agent':
       'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307001e)',
@@ -13,15 +11,19 @@ const options = {
   }
 }
 
-const queue = async () => {
+const queue = async (cookieStr) => {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket('wss://wechat.v2.traceint.com/ws?ns=prereserve/queue', options)
+    const ws = new WebSocket('wss://wechat.v2.traceint.com/ws?ns=prereserve/queue', {
+      ...options,
+      Cookie: cookieStr
+    })
 
     ws.on('open', async () => {
       console.log('连接Websocket服务器成功')
 
       ws.on('message', async (data) => {
         const msg = data.toString()
+        console.log(msg)
 
         if (msg.includes('u6392')) {
           // 排队成功 返回的第一个字符
@@ -37,6 +39,11 @@ const queue = async () => {
           // 不在排队时间段
           console.log('等待排队')
           await sleep(100)
+        } else if (msg.includes('u767b')) {
+          // 已登记成功了
+          console.log('已登记成功座位')
+          ws.close()
+          resolve(false)
         } else {
           // 在队列中 data字段代表前方人数
           console.log(`前方还有${JSON.parse(msg).data}人`)

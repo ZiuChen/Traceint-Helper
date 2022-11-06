@@ -1,7 +1,8 @@
 const path = require('path')
 const notifier = require('node-notifier')
+const fetch = require('node-fetch')
 
-const request = require('./request')
+const operation = require('./operation')
 const env = require('./env')
 const { sleep } = require('./utils')
 const queue = require('./queue')
@@ -17,19 +18,15 @@ console.log = (...args) => {
 }
 
 const User = class {
+  cookieStr
   userInfo
   userNick
   libList
   reserveTask
-  reserveStatus
-  prereserveStatus
-  failTimes
 
-  constructor() {
+  constructor(cookie) {
+    this.cookieStr = cookie
     this.reserveTask = env.ReserveTask
-    this.reserveStatus = false
-    this.prereserveStatus = false
-    this.failTimes = 0
   }
 
   async init() {
@@ -48,8 +45,30 @@ const User = class {
     }
   }
 
+  async request(operationName, variables) {
+    const url = 'https://wechat.v2.traceint.com/index.php/graphql/'
+    const header = {
+      'Content-Type': 'application/json',
+      'app-version': '2.0.9',
+      'user-agent':
+        'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307062c)',
+      Cookie: this.cookieStr
+    }
+    return fetch(url, {
+      method: 'POST',
+      headers: header,
+      body: JSON.stringify({
+        operationName,
+        query: operation[operationName],
+        variables: {
+          ...variables
+        }
+      })
+    }).then((res) => res.json())
+  }
+
   async startQueue() {
-    return queue()
+    return queue(this.cookieStr)
   }
 
   async startReserve(isMapAll = false) {
@@ -61,8 +80,6 @@ const User = class {
       console.log('按预约任务检索')
       let count = 0
       const loop = async () => {
-        // 预约成功或者失败次数超过 RETRY_TIMES 次则停止
-        if (this.reserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchSeatList()
         for (const task of this.reserveTask) {
           const seat = this.libList
@@ -87,7 +104,6 @@ const User = class {
       // 未配置任务 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
-        if (this.reserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
@@ -98,7 +114,6 @@ const User = class {
           const seats = lib.seats.filter((seat) => seat.seat_status === 1)
           if (!seats.length) {
             console.log(lib.lib_name + '无空位')
-            this.failTimes++
             continue
           }
           const msg = lib.lib_name + ' 有空位: ' + seats.map((seat) => seat.name).join(',')
@@ -126,7 +141,6 @@ const User = class {
       // 配置了任务 按任务预定
       console.log('按预约任务检索')
       const loop = async () => {
-        if (this.prereserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchPrereserveSeatList()
         for (const task of this.reserveTask) {
           const seats = this.libList.filter((lib) => lib.lib_id === task.libId)[0].pre_seats
@@ -139,7 +153,6 @@ const User = class {
           }
         }
         console.log('无空位')
-        this.failTimes++
         await sleep(parseInt(env.Timeout))
         loop()
       }
@@ -148,7 +161,6 @@ const User = class {
       // 捡漏模式 有座即可
       console.log('检索所有图书馆')
       const loop = async () => {
-        if (this.prereserveStatus || this.failTimes > RETRY_TIMES) return
         await this.fetchPrereserveSeatList()
         for (const lib of this.libList) {
           if (env.IgnoreLibIds.includes(lib.lib_id)) {
@@ -177,22 +189,22 @@ const User = class {
   }
 
   async checkIn() {
-    const data = await request('getList')
+    const data = await this.request('getList')
     const taskId = data.data.userAuth.credit.tasks[0].id
-    await request('checkIn', {
+    await this.request('checkIn', {
       user_task_id: taskId
     }).then(async (res) => {
       const done = res.data.userAuth.credit.done
       console.log(done ? '签到成功' : '签到失败: 今日已签到')
       if (done) {
-        const queryRes = await request('user_credit')
+        const queryRes = await this.request('user_credit')
         console.log('当前积分: ' + queryRes.data.userAuth.currentUser.user_credit)
       }
     })
   }
 
   async fetchUserInfo() {
-    const data = await request('userInfo', {
+    const data = await this.request('userInfo', {
       pos: 'App-首页'
     })
     if (!data.data.userAuth) {
@@ -213,7 +225,7 @@ const User = class {
   }
 
   async fetchLibList() {
-    const data = await request('index')
+    const data = await this.request('index')
     this.libList = data.data.userAuth.prereserve.libs
     return this.libList
   }
@@ -221,7 +233,7 @@ const User = class {
   async fetchSeatList() {
     // 更新今日预约所有场馆的座位信息
     for (const lib of this.libList) {
-      const data = await request('libLayout', {
+      const data = await this.request('libLayout', {
         libId: lib.lib_id
       })
       // status: 1 可选 2 已选 3 有人 4 暂离
@@ -237,7 +249,7 @@ const User = class {
       console.log('未找到座位: ' + seatId)
       return
     }
-    const data = await request('reserueSeat', {
+    const data = await this.request('reserueSeat', {
       seatKey: seatKey,
       libId: libId,
       captchaCode: '',
@@ -251,7 +263,6 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
-      this.failTimes++
       return false
     } else {
       const msg =
@@ -262,7 +273,6 @@ const User = class {
         title: 'Traceint-Helper',
         message: msg
       })
-      this.reserveStatus = true
       return true
     }
   }
@@ -270,7 +280,7 @@ const User = class {
   async fetchPrereserveSeatList() {
     // 更新明日预约所有场馆的座位信息
     for (const lib of this.libList) {
-      const data = await request('pre_libLayout', {
+      const data = await this.request('pre_libLayout', {
         libId: lib.lib_id
       })
       const seatsArray = data.data.userAuth.prereserve.libLayout?.seats
@@ -292,7 +302,7 @@ const User = class {
       console.log('未找到座位: ' + seatId)
       return
     }
-    const data = await request('save', {
+    const data = await this.request('save', {
       key: seatKey + '.',
       libid: libId,
       captchaCode: '',
@@ -306,7 +316,6 @@ const User = class {
           ' ' +
           data.errors[0].msg
       )
-      this.failTimes++
       return false
     } else {
       const msg =
@@ -317,7 +326,6 @@ const User = class {
         title: 'Traceint-Helper',
         message: msg
       })
-      this.prereserveStatus = true
       return true
     }
   }
