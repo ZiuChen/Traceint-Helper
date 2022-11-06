@@ -7,8 +7,6 @@ const env = require('./env')
 const { sleep } = require('./utils')
 const queue = require('./queue')
 
-const RETRY_TIMES = 3
-
 // rewite console.log and add time prefix
 const log = console.log
 console.log = (...args) => {
