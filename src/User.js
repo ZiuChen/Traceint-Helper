@@ -97,9 +97,9 @@ const User = class {
         }
         console.log(`检索第${++count}次`)
         await sleep(parseInt(env.Timeout))
-        loop()
+        await loop()
       }
-      loop()
+      await loop()
     } else {
       // 未配置任务 捡漏模式 有座即可
       console.log('检索所有图书馆')
@@ -128,9 +128,9 @@ const User = class {
           }
         }
         await sleep(parseInt(env.Timeout))
-        loop()
+        await loop()
       }
-      loop()
+      await loop()
     }
     return
   }
@@ -154,9 +154,9 @@ const User = class {
         }
         console.log('无空位')
         await sleep(parseInt(env.Timeout))
-        loop()
+        await loop()
       }
-      loop()
+      await loop()
     } else {
       // 捡漏模式 有座即可
       console.log('检索所有图书馆')
@@ -181,9 +181,9 @@ const User = class {
           }
         }
         await sleep(parseInt(env.Timeout))
-        loop()
+        await loop()
       }
-      loop()
+      await loop()
     }
     return
   }
