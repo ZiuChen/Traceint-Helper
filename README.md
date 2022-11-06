@@ -22,7 +22,9 @@ npm install
 # 将.sample.env重命名为.env
 mv .sample.env .env
 # 自行抓包后 将Cookie等数据填入.env
-# 执行脚本 检查控制台输出
+# 本地运行 检查控制台输出
+node main.js
+# 云函数运行 入口函数为index.main_handler
 node index.js
 ```
 

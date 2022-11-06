@@ -3,7 +3,7 @@ const { sleepUntil } = require('./src/utils')
 const env = require('./src/env')
 const cookieStr = require('./src/cookies')
 
-exports.main_handler = async () => {
+const main_handler = async () => {
   const user = new User(cookieStr)
   await user.init()
 
@@ -18,3 +18,5 @@ exports.main_handler = async () => {
     await user.startPrereserve()
   }
 }
+
+main_handler()
