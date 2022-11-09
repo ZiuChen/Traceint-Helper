@@ -8,7 +8,7 @@ const main_handler = async () => {
   await user.init()
 
   // today reverse
-  await user.startReserve(true)
+  // await user.startReserve(true)
 
   // tomorrow pre-reserve (auto queue)
   const { hour, minute, second } = env.SleepUntil
