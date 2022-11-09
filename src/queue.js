@@ -23,7 +23,7 @@ const queue = async (cookieStr) => {
 
       ws.on('message', async (data) => {
         const msg = data.toString()
-        console.log(msg)
+        // console.log(msg)
 
         if (msg.includes('u6392')) {
           // 排队成功 返回的第一个字符
