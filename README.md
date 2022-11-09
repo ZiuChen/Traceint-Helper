@@ -6,11 +6,10 @@
 
 **作者不提供技术支持 不对使用脚本产生的任何后果负责**
 
-- 支持预设抢课任务 指定图书馆与座位号
+- 支持预设任务 指定图书馆与座位号
 - 支持捡漏模式 有座自动预约并系统通知
 - 支持明日预约 支持自动排队
 - Cookie等隐私内容以环境变量保存在本地
-- 即用即开 用完即关
 
 ## 使用说明
 
@@ -22,10 +21,10 @@ npm install
 # 将.sample.env重命名为.env
 mv .sample.env .env
 # 自行抓包后 将Cookie等数据填入.env
-# 本地运行 检查控制台输出
-node main.js
-# 云函数运行 入口函数为index.main_handler
-node index.js
+# 本地运行命令
+npm run local
+# 云函数运行命令 函数入口函数为index.main_handler
+npm run server
 ```
 
 ## 注意事项
