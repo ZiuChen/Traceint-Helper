@@ -4,7 +4,6 @@ const env = {
   Cookie: process.env.Cookie || '',
   Authorization: process.env.Authorization || '',
   ReserveTask: [],
-  Timeout: process.env.Timeout,
   IgnoreLibIds: [],
   SleepUntil: {}
 }

@@ -7,6 +7,8 @@ const env = require('./env')
 const { sleep } = require('./utils')
 const queue = require('./queue')
 
+const Timeout = 1000
+
 // rewite console.log and add time prefix
 const log = console.log
 console.log = (...args) => {
@@ -90,11 +92,11 @@ const User = class {
               message: `图书馆${task.libId} ${task.seatId}有空位`
             })
             await this.reserve(task.libId, task.seatId)
-            await sleep(parseInt(env.Timeout))
+            await sleep(parseInt(Timeout))
           }
         }
         console.log(`检索第${++count}次`)
-        await sleep(parseInt(env.Timeout))
+        await sleep(parseInt(Timeout))
         await loop()
       }
       await loop()
@@ -122,10 +124,10 @@ const User = class {
           })
           for (const seat of seats) {
             await this.reserve(lib.lib_id, seat.name)
-            await sleep(parseInt(env.Timeout))
+            await sleep(parseInt(Timeout))
           }
         }
-        await sleep(parseInt(env.Timeout))
+        await sleep(parseInt(Timeout))
         await loop()
       }
       await loop()
@@ -147,11 +149,11 @@ const User = class {
             // false: 无人
             // seat_status都为 null 不知原因
             await this.prereserve(task.libId, task.seatId)
-            await sleep(parseInt(env.Timeout))
+            await sleep(parseInt(Timeout))
           }
         }
         console.log('无空位')
-        await sleep(parseInt(env.Timeout))
+        await sleep(parseInt(Timeout))
         await loop()
       }
       await loop()
@@ -175,10 +177,10 @@ const User = class {
 
           for (const seat of seats) {
             await this.prereserve(lib.lib_id, seat.name)
-            await sleep(parseInt(env.Timeout))
+            await sleep(parseInt(Timeout))
           }
         }
-        await sleep(parseInt(env.Timeout))
+        await sleep(parseInt(Timeout))
         await loop()
       }
       await loop()

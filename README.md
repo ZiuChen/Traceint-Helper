@@ -35,8 +35,6 @@ npm run server
 - `ReserveTask` 请填入最小化后的JSON数据
   - `ReserveTask` 中的参数 `libId` 为不同自习室id 可从执行脚本时控制台输出获取
   - `ReserveTask` 中的值均为数字而非字符串, 不要用双引号
-- `Timeout` 单位为毫秒(ms)
-  - 此参数决定了两次预定请求之间的时间间隔, 设置过小会触发服务器防护机制导致请求失败, 建议保持默认
 - `IgnoreLibIds` 填入的自习室id 将在捡漏模式下被忽略
 - `SleepUntil` 填入开始明日预约排队的时间
 
