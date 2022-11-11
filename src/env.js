@@ -1,8 +1,8 @@
 require('dotenv').config()
 
 const env = {
-  wechatSESS_ID: process.env.wechatSESS_ID,
-  Authorization: process.env.Authorization,
+  Cookie: process.env.Cookie || '',
+  Authorization: process.env.Authorization || '',
   ReserveTask: [],
   Timeout: process.env.Timeout,
   IgnoreLibIds: [],
