@@ -1,7 +1,6 @@
 {
   "scripts": {
-    "local": "node main.js",
-    "server": "node index.js"
+    "local": "node main.js"
   },
   "dependencies": {
     "dotenv": "^16.0.3",

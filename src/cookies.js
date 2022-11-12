@@ -1,5 +1,5 @@
 const env = require('./env')
 
-const cookieStr = env.Cookie ? env.Cookie : 'Authorization=' + env.Authorization || ''
+const cookieStr = env.Cookie || ''
 
 module.exports = cookieStr

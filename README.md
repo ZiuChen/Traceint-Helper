@@ -31,7 +31,6 @@ npm run server
 
 在填写 `.env` 时:
 
-- `Cookie` 如有值, 则使用此值, 否则使用`Authorization`值
 - `ReserveTask` 请填入最小化后的JSON数据
   - `ReserveTask` 中的参数 `libId` 为不同自习室id 可从执行脚本时控制台输出获取
   - `ReserveTask` 中的值均为数字而非字符串, 不要用双引号
