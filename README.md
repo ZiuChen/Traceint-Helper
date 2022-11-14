@@ -21,10 +21,8 @@ npm install
 # 将.sample.env重命名为.env
 mv .sample.env .env
 # 自行抓包后 将Cookie等数据填入.env
-# 本地运行命令
+# 运行命令
 npm run local
-# 云函数运行命令 函数入口函数为index.main_handler
-npm run server
 ```
 
 ## 注意事项
